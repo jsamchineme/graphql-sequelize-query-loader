@@ -1,0 +1,51 @@
+{
+  "name": "graphql-sequelize-query-loader",
+  "version": "1.0.3",
+  "description": "",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "test": "jest --config jestconfig.json",
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
+    "prepublishOnly": "npm test && npm run lint",
+    "prepare": "npm run build",
+    "preversion": "npm run lint",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push -f && git push --tags"
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jsamchineme/my-sequel-graph"
+  },
+  "bugs": {
+    "url": "https://github.com/jsamchineme/my-sequel-graph"
+  },
+  "homepage": "https://github.com/jsamchineme/my-sequel-graph",
+  "license": "ISC",
+  "keywords": [
+    "sequelize",
+    "graphql",
+    "graphql-sequelize",
+    "graphql-utils"
+  ],
+  "author": "jsamchineme",
+  "devDependencies": {
+    "@types/jest": "^24.0.15",
+    "jest": "^24.8.0",
+    "prettier": "^1.18.2",
+    "ts-jest": "^24.0.2",
+    "tslint": "^5.17.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.5.2"
+  },
+  "dependencies": {
+    "@types/graphql": "^14.2.1",
+    "graphql": "^14.3.1",
+    "sequelize": "^5.8.10"
+  }
+}
