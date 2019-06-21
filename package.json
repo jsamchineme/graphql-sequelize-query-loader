@@ -1,6 +1,6 @@
 {
   "name": "graphql-sequelize-query-loader",
-  "version": "1.0.1",
+  "version": "1.0.5",
   "description": "",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -20,24 +20,26 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jsamchineme/my-sequel-graph"
+    "url": "git+https://github.com/jsamchineme/graphql-sequelize-query-loader"
   },
   "bugs": {
-    "url": "https://github.com/jsamchineme/my-sequel-graph"
+    "url": "https://github.com/jsamchineme/graphql-sequelize-query-loader"
   },
-  "homepage": "https://github.com/jsamchineme/my-sequel-graph",
+  "homepage": "https://github.com/jsamchineme/graphql-sequelize-query-loader",
   "license": "MIT",
   "keywords": [
     "sequelize",
     "graphql",
     "graphql-sequelize",
     "graphql utils",
-    "tools",
-    "query loader"
+    "query-loader"
   ],
   "author": "jsamchineme",
   "devDependencies": {
+    "@types/bluebird": "^3.5.27",
+    "@types/graphql": "^14.2.1",
     "@types/jest": "^24.0.15",
+    "@types/validator": "^10.11.1",
     "codecov": "^3.5.0",
     "jest": "^24.8.0",
     "prettier": "^1.18.2",
@@ -47,9 +49,6 @@
     "typescript": "^3.5.2"
   },
   "dependencies": {
-    "@types/bluebird": "^3.5.27",
-    "@types/graphql": "^14.2.1",
-    "@types/validator": "^10.11.1",
     "graphql": "^14.3.1",
     "sequelize": "^5.8.10"
   }
