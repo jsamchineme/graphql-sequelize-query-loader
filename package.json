@@ -10,9 +10,9 @@
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
     "prepublishOnly": "npm test && npm run lint",
-    "prepare": "npm run build",
     "preversion": "npm run lint",
     "version": "npm run format && git add -A src",
+    "coverage": "codecov",
     "postversion": "git push -f && git push --tags"
   },
   "files": [
@@ -31,11 +31,14 @@
     "sequelize",
     "graphql",
     "graphql-sequelize",
-    "graphql-utils"
+    "graphql utils",
+    "tools",
+    "query loader"
   ],
   "author": "jsamchineme",
   "devDependencies": {
     "@types/jest": "^24.0.15",
+    "codecov": "^3.5.0",
     "jest": "^24.8.0",
     "prettier": "^1.18.2",
     "ts-jest": "^24.0.2",
