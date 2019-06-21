@@ -1,8 +1,8 @@
-# GraphQl - Sequelize Query Mapper
+# GraphQL-Sequelize Query Mapper
 [![codecov](https://codecov.io/gh/jsamchineme/graphql-sequelize-query-loader/branch/master/graph/badge.svg)](https://codecov.io/gh/jsamchineme/graphql-sequelize-query-loader)
 [![Build Status](https://travis-ci.com/jsamchineme/graphql-sequelize-query-loader.svg?branch=master)](https://travis-ci.com/jsamchineme/graphql-sequelize-query-loader)
-![GitHub](https://img.shields.io/github/license/jsamchineme/graphql-sequelize-query-loader.svg)
 [![codebeat badge](https://codebeat.co/badges/0c5b767b-a1e4-4f4f-9feb-5911690d1077)](https://codebeat.co/projects/github-com-jsamchineme-graphql-sequelize-query-loader-master)
+[![License](https://badgen.net/github/license/jsamchineme/graphql-sequelize-query-loader)](https://github.com/jsamchineme/graphql-sequelize-query-loader/blob/master/LICENCE)
 
 This utility tool inspects the structure of a GraphQL Query and converts it to query parameters that Sequelize understands, to facilitate eagerloading of associated resources.
 
