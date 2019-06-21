@@ -26,7 +26,7 @@
     "url": "https://github.com/jsamchineme/my-sequel-graph"
   },
   "homepage": "https://github.com/jsamchineme/my-sequel-graph",
-  "license": "ISC",
+  "license": "MIT",
   "keywords": [
     "sequelize",
     "graphql",
