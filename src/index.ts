@@ -1,46 +1,60 @@
-import sequelise, { Sequelize, Model } from 'sequelize';
-import { GraphQLResolveInfo } from 'graphql';
+import { 
+  FieldNode,
+  SelectionNode,
+  SelectionSetNode,
+  StringValueNode, 
+} from 'graphql';
 
-const { Op } = sequelise;
+import { 
+  FindOptions,
+  IncludeOptions,
+  Model as SequelizeModel,
+  Op,
+} from 'sequelize';
+
+import {
+  IQueryLoader,
+  ISequelizeOperators,
+  IWhereConstraints,
+  SelectedAttributes,
+  SelectedIncludes,
+} from './types';
+
 
 /**
  * Dictionary of available query scope operators
  * and their equivalent sequelize operator
  */
-const sequelizeOperators = {
+const sequelizeOperators: ISequelizeOperators = {
   eq: Op.eq,
   gt: Op.gt,
   gte: Op.gte,
+  like: Op.like,
   lt: Op.lt,
   lte: Op.lte,
   ne: Op.ne,
-  like: Op.like,
 };
 
 
-export default class DataInclude {
-  /**
-   * 
-   * @param options - options
-   * @param options.includeModels - the dictionary of includes to the sequelize models they use
-   */
-  static init({ includeModels }) {
-    DataInclude.includeModels = includeModels;
-  }
+const queryLoader: IQueryLoader = {
+  includeModels: {},
 
   /**
-   *
-   * @param {Object} models - Object mapping of all loaded Sequelize Models
-   * @param {SequelizeModel} model - model
-   * @param {Object} info - the info meta property passed from graphql. It has
-   * a structure that we can parse or analyse, to determine the attributes to be selected from the database
-   * as well as the associated models to be included using sequelize include
-   * @returns {Object} - the query options to be applied
-   *
-   * ******************************************************
-   *
+   * Initialise the queryLoader utility
+   * 
+   * @param options - configuration options used for the initializing utility
+   * @param options.includeModels - object containing included Models as pairs of `modelName`: `SequelizeModel`
+   */
+  init({ includeModels }) {
+    this.includeModels = includeModels;
+  },
+
+  /**
+   * Returns the options that should be supplied to
+   * a Sequelize `Find` or `FindAll` method call
+   * 
+   * @remarks
    * A GraphQL Query with this structure
-   * >>>>>
    * ```js
    * categories {
    *   name
@@ -61,7 +75,6 @@ export default class DataInclude {
    * is converted to a queryOptions object, in this structure
    * forming ONE SINGLE QUERY that will be executed against the database
    * with sequelize
-   * <<<<<
    * ```js
    * {
    *   attributes: ['name'],
@@ -91,13 +104,20 @@ export default class DataInclude {
    *     }]
    *   }]
    * }
+   * ```
+   * @param model - model
+   * @param info - the info meta property passed from graphql. 
+   * It has a structure that we can parse or analyse, to determine the attributes to be selected from the database
+   * as well as the associated models to be included using sequelize include
+   * @returns the query options to be applied to the Find method call
+   *
    */
-  static getQueryOptions(models: any, model: Model, info: GraphQLResolveInfo) {
-    const { selections } = info.fieldNodes[0].selectionSet;
-    const selectedAttributes = DataInclude.getSelectedAttributes(model, selections);
-    const queryIncludes = DataInclude.getSelectedIncludes(models, model, selections);
+  getFindOptions({ model, info }): object {
+    const selections = (info.fieldNodes[0].selectionSet as SelectionSetNode).selections;
+    const selectedAttributes = this.getSelectedAttributes({ model, selections });
+    const queryIncludes = this.getSelectedIncludes({ model, selections });
 
-    const queryOptions = {
+    const queryOptions: FindOptions = {
       attributes: selectedAttributes,
     };
 
@@ -106,37 +126,47 @@ export default class DataInclude {
     }
 
     return queryOptions;
-  }
+  },
 
   /**
-   *
-   * @param {Object} models - models
-   * @param {SequelizeModel} model - model
-   * @param {Array} selections - selections
-   * @returns {Array} - array
+   * Return an array of all the includes to be carried out
+   * based on the schema sent in the request from graphql
+   * 
+   * @param selections - an array of the selection nodes for each field in the schema.
+   * @returns the array that should contain all model and association-model includes
    */
-  static prepareIncludes(models, model, selections) {
-    const includes = [];
-    const includedModelSections = selections.filter(selection => selection.selectionSet !== undefined);
-    const hasFieldWithSelectionSet = includedModelSections !== undefined;
+  prepareIncludes({ selections = [] }): SelectedIncludes {
+    const includes: SelectedIncludes = [];
+    const includedModelSelections: SelectionNode[] = 
+      selections.filter((selection) => (selection as FieldNode).selectionSet !== undefined);
 
-    includedModelSections.forEach((selection) => {
-      const fieldName = selection.name.value;
-      const includedModel = DataInclude.getIncludeModel(models, fieldName);
-      const selectedAttributes = DataInclude.getSelectedAttributes(includedModel, selection.selectionSet.selections);
+    const hasFieldWithSelectionSet = includedModelSelections !== undefined;
+
+    includedModelSelections.forEach((item) => {
+      const selection = item as FieldNode;
+      const fieldName: string = selection.name.value;
+      const includedModel: SequelizeModel | any = this.getIncludeModel(fieldName);
+      const selectionSet = selection.selectionSet || { selections: undefined };
+
+      const selectedAttributes: SelectedAttributes = this.getSelectedAttributes({ 
+        model: includedModel,
+        selections: selectionSet.selections
+      });
 
       let queryIncludes;
       if (hasFieldWithSelectionSet) {
-        const currentSelections = selection.selectionSet.selections;
-        queryIncludes = DataInclude.getSelectedIncludes(models, includedModel, currentSelections);
+        const fieldSelectionSet = selection.selectionSet || { selections: undefined };
+        const currentSelections = fieldSelectionSet.selections;
+        queryIncludes = this.getSelectedIncludes({ model: includedModel, selections: currentSelections });
       }
 
-      const whereAttributes = DataInclude.turnArgsToWhere(selection.arguments);
+      const selectionArguments = selection.arguments || [];
+      const whereAttributes = this.turnArgsToWhere(selectionArguments);
 
-      const includeOption = {
-        model: includedModel,
+      const includeOption: IncludeOptions = {
         as: fieldName,
         attributes: selectedAttributes,
+        model: includedModel,
         required: false
       };
 
@@ -150,20 +180,23 @@ export default class DataInclude {
       includes.push(includeOption);
     });
     return includes;
-  }
+  },
 
   /**
    * Return an array of all the includes to be carried out
    * based on the schema sent in the request from graphql
-   * @param {Object} models - the Sequelize Models Object that contains all defined Models
-   * @param {SequelizeModel} model - a specific model that should be checked for selected includes
-   * @param {Array} selections - an array of the fields in the schema.
-   * Contains objects {name, selectionSet, ...}
-   * @returns {Array} - the array that should contain all model and association-model includes
+   * 
+   * @remarks
+   * This method is called `recursively` to prepare the included models
+   * for all nodes with nested or associated resource(s)
+   * 
+   * @param model - a specific model that should be checked for selected includes
+   * @param selections - an array of the selection nodes for each field in the schema.
+   * @returns the array that should contain all model and association-model includes
    */
-  static getSelectedIncludes(models, model, selections) {
-    let includes = [];
-    const includedModelSections = selections.filter(item => item.selectionSet !== undefined);
+  getSelectedIncludes({ model, selections = [] }) {
+    let includes: SelectedIncludes = [];
+    const includedModelSections = selections.filter(item => (item as FieldNode).selectionSet !== undefined);
 
     /**
      * hasFieldWithSelectionSet is used to assert that the top level resource
@@ -172,16 +205,16 @@ export default class DataInclude {
     const hasFieldWithSelectionSet = includedModelSections !== undefined;
 
     if (hasFieldWithSelectionSet) {
-      includes = DataInclude.prepareIncludes(models, model, selections);
+      includes = this.prepareIncludes({ model, selections });
     }
-    return includes;
-  }
+    return includes
+  },
 
-  static getIncludeModel(models, includeKeyName) {
-    return DataInclude.includeModels[includeKeyName];
-  }
+  getIncludeModel(modelKeyName: string) {
+    return this.includeModels[modelKeyName];
+  },
 
-  static getSelectedAttributes(model, selections) {
+  getSelectedAttributes({ model, selections = [] }) {
     /**
      * Request schema can sometimes have fields that do not exist in the table for the Model requested.
      * Here, we get all model attributes and check the request schema for fields that exist as
@@ -190,14 +223,15 @@ export default class DataInclude {
      */
   
     // Initialise the list of selected attributes
-    const selectedAttributes = [];
+    const selectedAttributes: SelectedAttributes = [];
   
     // Get the field names for the model
     const modelAttributes = Object.keys(model.rawAttributes);
   
-    selections.forEach((selection) => {
+    selections.forEach((item) => {
+      const selection = item as FieldNode;
       const fieldName = selection.name.value;
-      const isModelAttribute = modelAttributes.find(item => item === fieldName);
+      const isModelAttribute = modelAttributes.find(attr => attr === fieldName);
       const hasSubSelection = selection.selectionSet !== undefined;
   
       if (isModelAttribute && !hasSubSelection) {
@@ -206,9 +240,9 @@ export default class DataInclude {
     });
   
     return selectedAttributes;
-  }
+  },
 
-  static turnArgsToWhere(fieldArguments) {
+  turnArgsToWhere(fieldArguments) {
     /**
      * With any of the included models, the query can have arguments,
      * Here we convert the arguments into a data structure which will
@@ -216,32 +250,65 @@ export default class DataInclude {
      */
   
     let whereConstraints;
-  
     if (fieldArguments.length) {
-      whereConstraints = {};
-      whereConstraints = DataInclude.getWhereConstraints(fieldArguments);
+      whereConstraints = this.getWhereConstraints(fieldArguments);
     }
-  
     return whereConstraints;
-  }
+  },
 
-  static getWhereConstraints = (args) => {
-    const whereOption = {};
-    const whereArgument = args.find(arg => arg.name.value === 'scope');
-    const argumentString = whereArgument.value.value;
-    const whereComparisons = argumentString.split('&&');
-  
-    whereComparisons.forEach((fieldConditionString) => {
-      const constraint = fieldConditionString.split('|');
-      const field = constraint[0].trim();
-      const operation = constraint[1].trim();
-      const value = constraint[2].trim();
-      const sequelizeOperator = sequelizeOperators[operation];
-  
-      whereOption[field] = { [sequelizeOperator]: value };
-    });
-  
-    // console.log({ whereOption });
+  getWhereConstraints(fieldArguments) {
+    const whereOption: IWhereConstraints = {};
+    const scopeFieldArgument = fieldArguments.find(arg => arg.name.value === 'scope');
+
+    if(scopeFieldArgument !== undefined) {
+      const argumentValueNode = scopeFieldArgument.value as StringValueNode;
+      const argumentString = argumentValueNode.value;
+      /**
+       * we split with `&&` because we can multiple constraints
+       * for example we can have a field like
+       * `id|like|%introduction% && published|eq|true`
+       * 
+       * This would be the case for a GraphQL query like this
+       * ```js
+       * articles(scope: "id|like|%introduction% && published|eq|true") {
+       *   id
+       *   body
+       * }
+       */
+      const whereComparisons = argumentString.split('&&');
+    
+      whereComparisons.forEach((fieldConditionString) => {
+        const splitString = this.getValidScopeString(fieldConditionString);
+        const field = splitString[0].trim();
+        const operation = splitString[1].trim();
+        const value = splitString[2].trim();
+        const sequelizeOperator = sequelizeOperators[operation];
+        whereOption[field] = { [sequelizeOperator]: value };
+      });
+    }
+    
     return whereOption;
-  };
+  },
+
+  /**
+   * Validate the scope argument string to be sure
+   * there are no errors.
+   * @param splitString - scope string to be checked
+   */
+  getValidScopeString(fieldConditionString) {
+    const splitString = fieldConditionString.split('|');
+    if(splitString.length < 3) {
+      throw Error(`Incorrect Parts supplied for scope: ${fieldConditionString}`);
+    }
+    const field = splitString[0].trim();
+    const operation = splitString[1].trim();
+    const value = splitString[2].trim();
+
+    if(field === "" || operation === "" || value === "") {
+      throw Error(`Incorrect Parts supplied for scope: ${fieldConditionString}`);      
+    }
+    return splitString;
+  }
 }
+
+export = queryLoader;
