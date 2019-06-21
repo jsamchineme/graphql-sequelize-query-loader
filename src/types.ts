@@ -1,5 +1,5 @@
 import { ArgumentNode, GraphQLResolveInfo, SelectionNode } from 'graphql';
-import { FindOptions, IncludeOptions, Model as SequelizeModel, OperatorsAliases } from "sequelize/types";
+import { FindOptions, IncludeOptions, Model as SequelizeModel } from "sequelize/types";
 
 /**
  * Object containing all loaded models
@@ -98,9 +98,9 @@ export interface IQueryLoader {
 
   getIncludeModel: (fieldName: string) => SequelizeModel
 
-  turnArgsToWhere: (fieldArguments: ReadonlyArray<ArgumentNode>) => IWhereConstraints | undefined
+  turnArgsToWhere: (fieldArguments: ReadonlyArray<ArgumentNode>) => IWhereConstraints | {}
 
-  getWhereConstraints: (fieldArguments: ReadonlyArray<ArgumentNode>) => IWhereConstraints | undefined
+  getWhereConstraints: (fieldArguments: ReadonlyArray<ArgumentNode>) => IWhereConstraints | {}
 
   getValidScopeString: (fieldConditionString: string) => string[]
 }
