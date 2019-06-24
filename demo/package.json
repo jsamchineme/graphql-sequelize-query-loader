@@ -1,0 +1,39 @@
+{
+  "name": "sequelize-pro",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "cross-env NODE_ENV=development babel-node server --preset-env",
+    "migrate": "cross-env NODE_ENV=development sequelize db:migrate",
+    "db:seed": "npm run migration && cross-env NODE_ENV=development babel-node server/seeders/dbSeed.js --preset-env",
+    "migrate:reset": "sequelize db:migrate:undo:all",
+    "migration": "npm run migrate:reset && npm run migrate"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.2.2",
+    "@babel/node": "^7.2.2",
+    "@babel/preset-env": "^7.3.1",
+    "cross-env": "^5.2.0",
+    "sequelize-cli": "^5.5.0"
+  },
+  "dependencies": {
+    "apollo-boost": "^0.1.28",
+    "apollo-server-express": "^2.4.2",
+    "body-parser": "^1.18.3",
+    "cors": "^2.8.5",
+    "dotenv": "^6.2.0",
+    "express": "^4.16.4",
+    "faker": "^4.1.0",
+    "graphql": "^14.1.1",
+    "graphql-sequelize-query-loader": "^1.0.5",
+    "graphql-tag": "^2.10.1",
+    "morgan": "^1.9.1",
+    "pg": "^7.8.0",
+    "pg-hstore": "^2.3.2",
+    "sequelize": "^5.8.10"
+  }
+}

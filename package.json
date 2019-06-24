@@ -1,7 +1,7 @@
 {
   "name": "graphql-sequelize-query-loader",
-  "version": "1.0.5",
-  "description": "",
+  "version": "1.0.6",
+  "description": "Convert GraphQL Query to query options for Sequelize models facilitating eagerloading of associated resources.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
