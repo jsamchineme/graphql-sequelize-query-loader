@@ -1,11 +1,11 @@
-import { 
+import {
   FieldNode,
   SelectionNode,
   SelectionSetNode,
-  StringValueNode, 
+  StringValueNode,
 } from 'graphql';
 
-import { 
+import {
   FindOptions,
   IncludeOptions,
   Model as SequelizeModel,
@@ -23,7 +23,7 @@ import {
 
 /**
  * Dictionary of available query scope operators
- * and their equivalent sequelize operator
+ * and their equivalent sequelize operators
  */
 const sequelizeOperators: ISequelizeOperators = {
   eq: Op.eq,
@@ -41,7 +41,7 @@ const queryLoader: IQueryLoader = {
 
   /**
    * Initialise the queryLoader utility
-   * 
+   *
    * @param options - configuration options used for the initializing utility
    * @param options.includeModels - object containing included Models as pairs of `modelName`: `SequelizeModel`
    */
@@ -55,7 +55,7 @@ const queryLoader: IQueryLoader = {
   /**
    * Returns the options that should be supplied to
    * a Sequelize `Find` or `FindAll` method call
-   * 
+   *
    * @remarks
    * A GraphQL Query with this structure
    * ```js
@@ -75,7 +75,7 @@ const queryLoader: IQueryLoader = {
    *   }
    * }
    * ```
-   * is converted to a queryOptions object, in this structure
+   * is converted to a `findOptions` object, in this structure
    * forming ONE SINGLE QUERY that will be executed against the database
    * with sequelize
    * ```js
@@ -109,7 +109,7 @@ const queryLoader: IQueryLoader = {
    * }
    * ```
    * @param model - model
-   * @param info - the info meta property passed from graphql. 
+   * @param info - the info meta property passed from graphql.
    * It has a structure that we can parse or analyse, to determine the attributes to be selected from the database
    * as well as the associated models to be included using sequelize include
    * @returns the query options to be applied to the Find method call
@@ -140,13 +140,13 @@ const queryLoader: IQueryLoader = {
   /**
    * Return an array of all the includes to be carried out
    * based on the schema sent in the request from graphql
-   * 
+   *
    * @param selections - an array of the selection nodes for each field in the schema.
    * @returns the array that should contain all model and association-model includes
    */
   prepareIncludes({ selections = [] }): SelectedIncludes {
     const includes: SelectedIncludes = [];
-    const includedModelSelections: SelectionNode[] = 
+    const includedModelSelections: SelectionNode[] =
       selections.filter((selection) => (selection as FieldNode).selectionSet !== undefined);
 
     const hasFieldWithSelectionSet = includedModelSelections !== undefined;
@@ -157,7 +157,7 @@ const queryLoader: IQueryLoader = {
       const includedModel: SequelizeModel | any = this.getIncludeModel(fieldName);
       const selectionSet = selection.selectionSet || { selections: undefined };
 
-      const selectedAttributes: SelectedAttributes = this.getSelectedAttributes({ 
+      const selectedAttributes: SelectedAttributes = this.getSelectedAttributes({
         model: includedModel,
         selections: selectionSet.selections
       });
@@ -194,11 +194,11 @@ const queryLoader: IQueryLoader = {
   /**
    * Return an array of all the includes to be carried out
    * based on the schema sent in the request from graphql
-   * 
+   *
    * @remarks
    * This method is called `recursively` to prepare the included models
    * for all nodes with nested or associated resource(s)
-   * 
+   *
    * @param model - a specific model that should be checked for selected includes
    * @param selections - an array of the selection nodes for each field in the schema.
    * @returns the array that should contain all model and association-model includes
@@ -230,24 +230,24 @@ const queryLoader: IQueryLoader = {
      * attributes for that model.
      * Those are the attributes that should be passed to the sequelise "select" query
      */
-  
+
     // Initialise the list of selected attributes
     const selectedAttributes: SelectedAttributes = [];
-  
+
     // Get the field names for the model
     const modelAttributes = Object.keys((model).rawAttributes);
-  
+
     selections.forEach((item) => {
       const selection = item as FieldNode;
       const fieldName = selection.name.value;
       const isModelAttribute = modelAttributes.find(attr => attr === fieldName);
       const hasSubSelection = selection.selectionSet !== undefined;
-  
+
       if (isModelAttribute && !hasSubSelection) {
         selectedAttributes.push(fieldName);
       }
     });
-  
+
     return selectedAttributes;
   },
 
@@ -257,7 +257,7 @@ const queryLoader: IQueryLoader = {
      * Here we convert the arguments into a data structure which will
      * serve as the WHERE property to be supplied to the sequelize query
      */
-  
+
     let whereConstraints: IWhereConstraints = {};
     if (fieldArguments.length) {
       whereConstraints = this.getWhereConstraints(fieldArguments) as IWhereConstraints;
@@ -274,10 +274,10 @@ const queryLoader: IQueryLoader = {
       const argumentString = argumentValueNode.value;
       /**
        * we split with `&&` because we can multiple constraints
-       * for example we can have a field like
+       * for example we can the scope argument as a string like the following
        * `id|like|%introduction% && published|eq|true`
-       * 
-       * This would be the case for a GraphQL query like this
+       *
+       * This would be the case for a GraphQL query like the one below
        * ```js
        * articles(scope: "id|like|%introduction% && published|eq|true") {
        *   id
@@ -285,7 +285,7 @@ const queryLoader: IQueryLoader = {
        * }
        */
       const whereComparisons = argumentString.split('&&');
-    
+
       whereComparisons.forEach((fieldConditionString) => {
         const splitString = this.getValidScopeString(fieldConditionString);
         const field = splitString[0].trim();
@@ -295,7 +295,7 @@ const queryLoader: IQueryLoader = {
         whereOption[field] = { [sequelizeOperator]: value };
       });
     }
-    
+
     return whereOption;
   },
 
@@ -314,7 +314,7 @@ const queryLoader: IQueryLoader = {
     const value = splitString[2].trim();
 
     if(field === "" || operation === "" || value === "") {
-      throw Error(`Incorrect Parts supplied for scope: ${fieldConditionString}`);      
+      throw Error(`Incorrect Parts supplied for scope: ${fieldConditionString}`);
     }
     return splitString;
   }
