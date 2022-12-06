@@ -23,10 +23,10 @@
   "dependencies": {
     "apollo-boost": "^0.1.28",
     "apollo-server-express": "^2.4.2",
-    "body-parser": "^1.18.3",
+    "body-parser": "^1.20.1",
     "cors": "^2.8.5",
     "dotenv": "^6.2.0",
-    "express": "^4.16.4",
+    "express": "^4.18.2",
     "faker": "^4.1.0",
     "graphql": "^14.1.1",
     "graphql-sequelize-query-loader": "^1.0.5",
